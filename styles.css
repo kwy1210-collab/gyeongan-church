@@ -82,17 +82,13 @@ body {
   text-decoration: none;
 }
 
-.logo-badge {
+.logo-emblem {
   width: 44px;
   height: 44px;
-  background: var(--text-main);
-  color: white;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 1.15rem;
+  flex-shrink: 0;
 }
 
 .logo-text {
