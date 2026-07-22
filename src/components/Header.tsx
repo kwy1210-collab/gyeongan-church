@@ -24,7 +24,7 @@ export default function Header() {
     { name: "우리교회", href: "#about", icon: Church },
     { name: "설교/미디어", href: "#media", icon: Video },
     { name: "예배안내", href: "#worship", icon: Calendar },
-    { name: "행복한교회 생활", href: "#happylife", icon: Heart },
+    { name: "행복한교회생활", href: "#happylife", icon: Heart },
     { name: "오시는길", href: "#location", icon: MapPin },
   ];
 

@@ -7,7 +7,6 @@ export default function WorshipSection() {
       time: "주일 오전 11:00",
       location: "2층 예배실",
       description: "온 성도가 모여 드리는 경안교회 메인 예배",
-      highlight: true,
     },
     {
       name: "목장예배",

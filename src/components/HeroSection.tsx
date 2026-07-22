@@ -55,21 +55,13 @@ export default function HeroSection() {
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-serif leading-relaxed sm:leading-snug drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wide">
             복음을 통해 구원으로 부름받고,<br className="hidden sm:block" />
             훈련을 통해 성숙한 신자로 세워지고,<br className="hidden sm:block" />
-            삶의 자리에서 그리스도의 향기를 나타냄으로<br className="hidden sm:block" />
+            삶의 자리에서 그리스도의 향기를 나타냄으로 <br className="hidden sm:block" />
             하나님나라를 구현하는 공동체
           </h2>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <a
-            href="#worship"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-amber-700 hover:bg-amber-600 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-amber-900/40 hover:scale-105"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>예배 안내</span>
-            <ArrowRight className="w-4 h-4" />
-          </a>
           <a
             href="#media"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold text-base backdrop-blur-md border border-white/25 transition-all duration-200 shadow-md hover:scale-105"
@@ -78,11 +70,20 @@ export default function HeroSection() {
             <span>최신 설교 보기</span>
           </a>
           <a
-            href="#location"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-stone-800/80 hover:bg-stone-800 text-stone-200 font-bold text-base backdrop-blur-md border border-stone-700/60 transition-all duration-200 shadow-md hover:scale-105"
+            href="#worship"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-amber-700 hover:bg-amber-600 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-amber-900/40 hover:scale-105"
           >
-            <MapPin className="w-4 h-4 text-amber-400" />
-            <span>오시는 길</span>
+            <Calendar className="w-4 h-4" />
+            <span>예배 안내</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+
+          <a
+            href="#happylife"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-emerald-800/80 hover:bg-emerald-800 text-emerald-100 font-bold text-base backdrop-blur-md border border-emerald-700/60 transition-all duration-200 shadow-md hover:scale-105"
+          >
+            <Heart className="w-4 h-4 text-emerald-400" />
+            <span>행복한교회생활</span>
           </a>
         </div>
       </div>

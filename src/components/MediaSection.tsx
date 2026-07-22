@@ -136,7 +136,7 @@ export default function MediaSection() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold font-serif text-stone-900">최신 설교 영상</h3>
-                    <p className="text-xs text-stone-500">경안교회 공식 유튜브 채널 (@경안교회)</p>
+                    <p className="text-xs text-stone-500">경안교회 공식 유튜브 채널</p>
                   </div>
                 </div>
                 <a
@@ -217,15 +217,9 @@ export default function MediaSection() {
                     <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold font-serif text-stone-900">고원영 목사 목회칼럼</h3>
-                    <p className="text-xs text-stone-500 font-medium italic">
-                      "welcome, 신안 촌놈의 하나님나라 여행이.."
-                    </p>
+                    <h3 className="text-xl font-bold font-serif text-stone-900">신안 촌놈의 하나님나라 여행기</h3>
                   </div>
                 </div>
-                <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
-                  네이버 블로그
-                </span>
               </div>
 
               {/* Pastor Intro Card */}

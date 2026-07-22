@@ -33,7 +33,7 @@ export default function HappyLifeSection() {
             Happy Church Life
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-stone-900 mt-3 mb-4">
-            행복한 교회 생활
+            행복한교회생활
           </h2>
           <p className="text-stone-600 text-base sm:text-lg leading-relaxed">
             경안교회는 성도님들의 삶이 예수님 안에서 풍성해지도록 돕습니다. <br className="hidden sm:block" />
