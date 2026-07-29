@@ -8,6 +8,9 @@ export default function Footer() {
           {/* Brand Info (Left 5 Cols) */}
           <div className="md:col-span-5 space-y-4">
             <div>
+              <p className="text-xs text-amber-500 font-bold uppercase tracking-wider">
+                예수교대한성결교회
+              </p>
               <h3 className="text-2xl font-extrabold text-stone-100 font-serif">
                 경안교회
               </h3>

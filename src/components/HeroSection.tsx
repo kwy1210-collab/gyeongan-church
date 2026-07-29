@@ -50,10 +50,10 @@ export default function HeroSection() {
       {/* Hero Content */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white mb-8">
         
-        {/* Badge */}
+        {/* Denomination Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900/60 backdrop-blur-md border border-amber-500/30 mb-6 shadow-xl">
           <span className="text-xs sm:text-sm font-bold text-amber-200 tracking-wider">
-            부천 경안교회
+            예수교대한성결교회 경안교회
           </span>
         </div>
 

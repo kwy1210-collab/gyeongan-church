@@ -70,9 +70,16 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo Text */}
-        <a href="#" className="flex items-center group">
+        <a href="#" className="flex flex-col group">
           <span
-            className={`text-2xl font-extrabold tracking-tight font-serif ${
+            className={`text-xs font-medium tracking-wider uppercase ${
+              isScrolled ? "text-amber-800" : "text-amber-300"
+            }`}
+          >
+            예수교대한성결교회
+          </span>
+          <span
+            className={`text-xl font-extrabold tracking-tight font-serif ${
               isScrolled ? "text-stone-900" : "text-white"
             }`}
           >
