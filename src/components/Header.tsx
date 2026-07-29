@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, Church, Video, MapPin, Calendar, Compass, Heart } from "lucide-react";
+import { Menu, X, Phone, Church, Video, MapPin, Calendar, Compass, Heart, Users } from "lucide-react";
 import ChurchLogo from "@/components/icons/ChurchLogo";
+import MemberManagementModal from "@/components/MemberManagementModal";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,11 +79,11 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Call Quick Action */}
-        <div className="hidden lg:flex items-center gap-3">
+        {/* Call Quick Action & Member Management */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <a
             href="tel:010-2074-0691"
-            className={`inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full transition-all shadow-sm ${
+            className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 sm:px-4 py-2 rounded-full transition-all shadow-sm ${
               isScrolled
                 ? "bg-amber-800 text-white hover:bg-amber-900 shadow-amber-900/10"
                 : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/30"
@@ -90,6 +92,19 @@ export default function Header() {
             <Phone className="w-3.5 h-3.5" />
             <span>신앙상담 010-2074-0691</span>
           </a>
+
+          <button
+            onClick={() => setIsMemberModalOpen(true)}
+            className={`inline-flex items-center justify-center w-9 h-9 rounded-full transition-all shadow-sm cursor-pointer hover:scale-105 ${
+              isScrolled
+                ? "bg-amber-800 text-white hover:bg-amber-900 shadow-amber-900/10"
+                : "bg-stone-900/80 hover:bg-stone-900 text-white backdrop-blur-md border border-white/30"
+            }`}
+            title="성도 & 심방 관리"
+            aria-label="성도관리"
+          >
+            <Users className="w-4.5 h-4.5 text-amber-400" />
+          </button>
         </div>
 
         {/* Mobile menu button */}
@@ -122,10 +137,20 @@ export default function Header() {
                 </a>
               );
             })}
-            <div className="pt-4 mt-2 border-t border-stone-100">
+            <div className="pt-4 mt-2 border-t border-stone-100 space-y-2">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setIsMemberModalOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-stone-900 text-white rounded-xl font-bold shadow-md hover:bg-stone-800 transition-colors text-sm"
+              >
+                <Users className="w-4 h-4 text-amber-400" />
+                <span>성도 & 심방 관리</span>
+              </button>
               <a
                 href="tel:010-2074-0691"
-                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-amber-800 text-white rounded-xl font-bold shadow-md hover:bg-amber-900 transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-amber-800 text-white rounded-xl font-bold shadow-md hover:bg-amber-900 transition-colors text-sm"
               >
                 <Phone className="w-4 h-4" />
                 <span>담임목사 신앙상담 (010-2074-0691)</span>
@@ -134,6 +159,12 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Member & Visitation Management Single Window */}
+      <MemberManagementModal
+        isOpen={isMemberModalOpen}
+        onClose={() => setIsMemberModalOpen(false)}
+      />
     </header>
   );
 }
