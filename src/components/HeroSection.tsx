@@ -70,20 +70,20 @@ export default function HeroSection() {
             <span>최신 설교 보기</span>
           </a>
           <a
+            href="#happylife"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-emerald-800/80 hover:bg-emerald-800 text-emerald-100 font-bold text-base backdrop-blur-md border border-emerald-700/60 transition-all duration-200 shadow-md hover:scale-105"
+          >
+            <Heart className="w-4 h-4 text-emerald-400" />
+            <span>행복한교회생활</span>
+          </a>
+
+          <a
             href="#worship"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-amber-700 hover:bg-amber-600 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-amber-900/40 hover:scale-105"
           >
             <Calendar className="w-4 h-4" />
             <span>예배 안내</span>
             <ArrowRight className="w-4 h-4" />
-          </a>
-
-          <a
-            href="#happylife"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-emerald-800/80 hover:bg-emerald-800 text-emerald-100 font-bold text-base backdrop-blur-md border border-emerald-700/60 transition-all duration-200 shadow-md hover:scale-105"
-          >
-            <Heart className="w-4 h-4 text-emerald-400" />
-            <span>행복한교회생활</span>
           </a>
         </div>
       </div>
