@@ -50,13 +50,6 @@ export default function HeroSection() {
       {/* Hero Content */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white mb-8">
         
-        {/* Denomination Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900/60 backdrop-blur-md border border-amber-500/30 mb-6 shadow-xl">
-          <span className="text-xs sm:text-sm font-bold text-amber-200 tracking-wider">
-            예수교대한성결교회 경안교회
-          </span>
-        </div>
-
         {/* Vision Text */}
         <div className="mb-10">
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-serif leading-relaxed sm:leading-snug drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wide">
