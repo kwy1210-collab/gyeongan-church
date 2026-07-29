@@ -42,9 +42,9 @@ export default function HappyLifeSection() {
         </div>
 
         {/* Blog Image Grid */}
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-xl mx-auto space-y-6">
           {isLoading ? (
-            <div className="relative aspect-video bg-stone-200 rounded-3xl animate-pulse" />
+            <div className="relative aspect-[4/3] bg-stone-200 rounded-3xl animate-pulse" />
           ) : blogPosts.length > 0 ? (
             blogPosts.map((post) => (
               <a 
@@ -52,27 +52,27 @@ export default function HappyLifeSection() {
                 href={post.link} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="group block bg-stone-950 rounded-3xl overflow-hidden border border-stone-800/90 shadow-2xl transition-all duration-300 hover:border-emerald-700/50"
+                className="group block bg-stone-950 rounded-3xl overflow-hidden border border-stone-800/90 shadow-xl transition-all duration-300 hover:scale-[1.01]"
               >
-                {/* Full Un-cropped Photo Frame */}
-                <div className="relative w-full bg-stone-950 flex flex-col items-center">
+                {/* Natural Un-cropped Photo Frame */}
+                <div className="w-full bg-stone-950 flex flex-col items-center">
                   {post.imageUrl ? (
                     <img 
                       src={post.imageUrl} 
                       alt={post.title} 
                       referrerPolicy="no-referrer"
-                      className="w-full h-auto object-contain block rounded-t-3xl"
+                      className="w-full h-auto block rounded-t-3xl"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   ) : (
-                    <div className="w-full h-64 bg-stone-900 flex items-center justify-center text-stone-400">
+                    <div className="w-full h-56 bg-stone-900 flex items-center justify-center text-stone-400">
                       <span className="text-sm font-medium">이미지가 없습니다</span>
                     </div>
                   )}
                   
-                  {/* Title Bar with High Readability */}
-                  <div className="w-full bg-stone-950/95 border-t border-stone-800/80 py-5 px-6 sm:px-8 text-center">
-                    <h3 className="text-white text-lg sm:text-xl font-bold font-serif leading-snug group-hover:text-amber-200 transition-colors">
+                  {/* Title Bar */}
+                  <div className="w-full bg-stone-950 border-t border-stone-800/80 py-4 px-5 sm:px-6 text-center">
+                    <h3 className="text-white text-base sm:text-lg font-bold font-serif leading-snug group-hover:text-amber-200 transition-colors">
                       {post.title}
                     </h3>
                   </div>
@@ -82,7 +82,7 @@ export default function HappyLifeSection() {
           ) : (
             <>
               {/* Fallback place holder if no posts */}
-              <div className="relative aspect-video bg-stone-100 rounded-3xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-400">
+              <div className="relative aspect-[4/3] bg-stone-100 rounded-3xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-400">
                 <span className="text-sm">새로운 소식을 준비 중입니다</span>
               </div>
             </>
