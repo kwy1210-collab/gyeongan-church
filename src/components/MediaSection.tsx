@@ -7,36 +7,36 @@ import YoutubeIcon from "@/components/icons/YoutubeIcon";
 export default function MediaSection() {
   const initialSermons = [
     {
-      id: "1",
-      title: "하나님을 평가하는 사람들",
+      id: "sunday-1",
+      title: "2026-7-26 주일오전예배 (겨자씨와 같은 하나님 나라)",
+      speaker: "고원영 담임목사",
+      date: "2026-7-26",
+      bible: "마태복음 13장 31-32절",
+      videoId: "meMuMncX3mI",
+    },
+    {
+      id: "sunday-2",
+      title: "2026-7-19 주일오전예배 (하나님을 평가하는 사람들)",
       speaker: "고원영 담임목사",
       date: "2026-7-19",
       bible: "누가복음 7장 31-35절",
       videoId: "psjy6XhC9bM",
     },
     {
-      id: "2",
-      title: "어린양이 되어 오신 예수님",
+      id: "sunday-3",
+      title: "2026-7-12 주일오전예배 (어린아이가 되어야 합니다)",
       speaker: "고원영 담임목사",
       date: "2026-7-12",
-      bible: "요한복음 19:1-15",
+      bible: "마태복음 19장 1-15절",
       videoId: "yxRySKafxOc",
     },
     {
-      id: "3",
-      title: "매일의 기도와 성령의 감동",
+      id: "sunday-4",
+      title: "2026-7-5 주일오전예배 (곤고한 날에, 형통한 날에)",
       speaker: "고원영 담임목사",
       date: "2026-7-5",
-      bible: "데살로니가전서 5:16-18",
-      videoId: "akAARedcODw",
-    },
-    {
-      id: "4",
-      title: "믿음으로 세워지는 기쁨의 공동체",
-      speaker: "고원영 담임목사",
-      date: "2026-6-28",
-      bible: "빌립보서 1:3-11",
-      videoId: "DWcJFNfB9bc",
+      bible: "전도서 7장 11-14절",
+      videoId: "ZxR3TXQ28Bo",
     },
   ];
 
@@ -46,12 +46,24 @@ export default function MediaSection() {
   useEffect(() => {
     const fetchYouTubeSermons = async () => {
       try {
-        const response = await fetch('/api/youtube');
+        const response = await fetch(`/api/youtube?t=${Date.now()}`, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         if (response.ok) {
           const data = await response.json();
-          if (data && data.length > 0) {
-            setSermons(data);
-            setActiveSermon(data[0]);
+          if (Array.isArray(data) && data.length > 0) {
+            // Must contain '주일' and MUST NOT contain non-Sunday keywords
+            const sundayOnly = data.filter((s: any) => {
+              const t = s.title || '';
+              const isSundayTitle = t.includes('주일');
+              const hasWeekdayKey = t.includes('수요') || t.includes('새벽') || t.includes('말씀묵상') || t.includes('큐티') || t.includes('금요');
+              return isSundayTitle && !hasWeekdayKey;
+            });
+            if (sundayOnly.length >= 4) {
+              setSermons(sundayOnly.slice(0, 4));
+              setActiveSermon(sundayOnly[0]);
+            }
           }
         }
       } catch (error) {
