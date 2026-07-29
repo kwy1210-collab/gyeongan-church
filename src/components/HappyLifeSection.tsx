@@ -42,12 +42,9 @@ export default function HappyLifeSection() {
         </div>
 
         {/* Blog Image Grid */}
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           {isLoading ? (
-            <>
-              <div className="relative aspect-video bg-stone-200 rounded-3xl animate-pulse"></div>
-              <div className="relative aspect-video bg-stone-200 rounded-3xl animate-pulse"></div>
-            </>
+            <div className="relative aspect-[4/3] bg-stone-200 rounded-3xl animate-pulse" />
           ) : blogPosts.length > 0 ? (
             blogPosts.map((post) => (
               <a 
@@ -55,36 +52,39 @@ export default function HappyLifeSection() {
                 href={post.link} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="group relative bg-stone-950 rounded-3xl flex flex-col items-center justify-center overflow-hidden hover:shadow-xl hover:shadow-emerald-900/10 transition-all duration-300"
+                className="group block bg-stone-950 rounded-3xl overflow-hidden border border-stone-800 shadow-xl hover:shadow-emerald-950/20 transition-all duration-300"
               >
-                {post.imageUrl ? (
-                  <img 
-                    src={post.imageUrl} 
-                    alt={post.title} 
-                    referrerPolicy="no-referrer"
-                    className="w-full h-auto max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-105"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 w-full h-full bg-stone-200 flex items-center justify-center text-stone-400">
-                    <span className="text-sm font-medium">이미지가 없습니다</span>
+                {/* Photo Frame with Crisp Aspect Ratio */}
+                <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-stone-900 overflow-hidden">
+                  {post.imageUrl ? (
+                    <img 
+                      src={post.imageUrl} 
+                      alt={post.title} 
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-stone-200 flex items-center justify-center text-stone-400">
+                      <span className="text-sm font-medium">이미지가 없습니다</span>
+                    </div>
+                  )}
+                  {/* Overlay Gradient for Text Readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-900/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity duration-300" />
+                  
+                  {/* Content Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 flex flex-col items-center text-center">
+                    <h3 className="text-white text-lg sm:text-xl font-bold font-serif leading-snug drop-shadow-md">
+                      {post.title}
+                    </h3>
                   </div>
-                )}
-                {/* Overlay Gradient for Text */}
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
-                
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex flex-col items-center text-center">
-                  <h3 className="text-white text-xl sm:text-2xl font-bold font-serif leading-snug line-clamp-2 mb-2">
-                    {post.title}
-                  </h3>
                 </div>
               </a>
             ))
           ) : (
             <>
               {/* Fallback place holder if no posts */}
-              <div className="relative aspect-video bg-stone-100 rounded-3xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-400">
+              <div className="relative aspect-[4/3] bg-stone-100 rounded-3xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-400">
                 <span className="text-sm">새로운 소식을 준비 중입니다</span>
               </div>
             </>
