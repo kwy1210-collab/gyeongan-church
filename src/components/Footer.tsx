@@ -7,12 +7,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-stone-800/80">
           {/* Brand Info (Left 5 Cols) */}
           <div className="md:col-span-5 space-y-4">
-            <div>
-              <p className="text-xs text-amber-500 font-bold uppercase tracking-wider">
+            <div className="inline-grid grid-cols-1 w-max">
+              <p className="text-xs text-amber-500 font-bold uppercase whitespace-nowrap leading-tight">
                 예수교대한성결교회
               </p>
-              <h3 className="text-2xl font-extrabold text-stone-100 font-serif">
-                경안교회
+              <h3 className="w-full flex justify-between text-2xl font-extrabold text-stone-100 font-serif leading-tight mt-0.5">
+                <span>경</span>
+                <span>안</span>
+                <span>교</span>
+                <span>회</span>
               </h3>
             </div>
 

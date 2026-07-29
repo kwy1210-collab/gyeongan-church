@@ -70,21 +70,24 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo Text */}
-        <a href="#" className="flex flex-col group">
+        <a href="#" className="inline-grid grid-cols-1 w-max group">
           <span
-            className={`text-xs font-medium tracking-wider uppercase ${
+            className={`text-xs font-semibold uppercase whitespace-nowrap leading-tight ${
               isScrolled ? "text-amber-800" : "text-amber-300"
             }`}
           >
             예수교대한성결교회
           </span>
-          <span
-            className={`text-xl font-extrabold tracking-tight font-serif ${
+          <div
+            className={`w-full flex justify-between text-xl font-extrabold font-serif leading-tight mt-0.5 ${
               isScrolled ? "text-stone-900" : "text-white"
             }`}
           >
-            경안교회
-          </span>
+            <span>경</span>
+            <span>안</span>
+            <span>교</span>
+            <span>회</span>
+          </div>
         </a>
 
         {/* Desktop Navigation */}
