@@ -960,7 +960,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     required
                     value={memberFormData.name || ""}
                     onChange={(e) => setMemberFormData({ ...memberFormData, name: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                     placeholder="예: 홍길동"
                   />
                 </div>
@@ -972,7 +972,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     required
                     value={memberFormData.phone || ""}
                     onChange={(e) => setMemberFormData({ ...memberFormData, phone: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                     placeholder="010-0000-0000"
                   />
                 </div>
@@ -984,7 +984,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   <select
                     value={memberFormData.position || "성도"}
                     onChange={(e) => setMemberFormData({ ...memberFormData, position: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   >
                     <option value="성도">성도</option>
                     <option value="집사">집사</option>
@@ -1002,7 +1002,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     type="text"
                     value={memberFormData.district || "1구역"}
                     onChange={(e) => setMemberFormData({ ...memberFormData, district: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                     placeholder="예: 1구역, 청년부"
                   />
                 </div>
@@ -1015,7 +1015,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     type="date"
                     value={memberFormData.birthdate || ""}
                     onChange={(e) => setMemberFormData({ ...memberFormData, birthdate: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   />
                 </div>
 
@@ -1025,7 +1025,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     type="text"
                     value={memberFormData.familyNotes || ""}
                     onChange={(e) => setMemberFormData({ ...memberFormData, familyNotes: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                     placeholder="예: 배우자 김영희 집사"
                   />
                 </div>
@@ -1037,7 +1037,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   type="text"
                   value={memberFormData.address || ""}
                   onChange={(e) => setMemberFormData({ ...memberFormData, address: e.target.value })}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                  className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   placeholder="도로명 주소 입력"
                 />
               </div>
@@ -1048,7 +1048,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   rows={3}
                   value={memberFormData.notes || ""}
                   onChange={(e) => setMemberFormData({ ...memberFormData, notes: e.target.value })}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                  className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   placeholder="신앙 상태, 봉사 부서 등 메모..."
                 />
               </div>
@@ -1102,7 +1102,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                         memberName: selected ? selected.name : "",
                       });
                     }}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   >
                     <option value="">성도 선택...</option>
                     {members.map((m) => (
@@ -1120,7 +1120,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     required
                     value={visitationFormData.date || ""}
                     onChange={(e) => setVisitationFormData({ ...visitationFormData, date: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   />
                 </div>
               </div>
@@ -1131,7 +1131,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   <select
                     value={visitationFormData.type || "정기심방"}
                     onChange={(e) => setVisitationFormData({ ...visitationFormData, type: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   >
                     <option value="정기심방">정기심방</option>
                     <option value="환우심방">환우심방</option>
@@ -1148,7 +1148,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                     type="text"
                     value={visitationFormData.visitor || "담임목사"}
                     onChange={(e) => setVisitationFormData({ ...visitationFormData, visitor: e.target.value })}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                    className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                     placeholder="예: 담임목사, 구역장"
                   />
                 </div>
@@ -1160,7 +1160,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   type="text"
                   value={visitationFormData.scripture || ""}
                   onChange={(e) => setVisitationFormData({ ...visitationFormData, scripture: e.target.value })}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                  className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   placeholder="예: 시편 23편 1-6절"
                 />
               </div>
@@ -1171,7 +1171,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   rows={2}
                   value={visitationFormData.prayerRequests || ""}
                   onChange={(e) => setVisitationFormData({ ...visitationFormData, prayerRequests: e.target.value })}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                  className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   placeholder="가정 및 개인 기도제목..."
                 />
               </div>
@@ -1183,7 +1183,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                   required
                   value={visitationFormData.notes || ""}
                   onChange={(e) => setVisitationFormData({ ...visitationFormData, notes: e.target.value })}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none"
+                  className="w-full p-2 bg-white text-stone-900 font-medium border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
                   placeholder="심방 주요 권면, 상황 및 대화 내용..."
                 />
               </div>
