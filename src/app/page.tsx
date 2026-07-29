@@ -12,8 +12,8 @@ export default function Home() {
       <Header />
       <HeroSection />
       <MediaSection />
-      <WorshipSection />
       <HappyLifeSection />
+      <WorshipSection />
 
       <LocationSection />
       <Footer />
