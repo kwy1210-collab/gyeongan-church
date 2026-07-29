@@ -1,5 +1,4 @@
 import { Phone, MapPin, Heart, ArrowUp } from "lucide-react";
-import ChurchLogo from "@/components/icons/ChurchLogo";
 
 export default function Footer() {
   return (
@@ -8,16 +7,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-stone-800/80">
           {/* Brand Info (Left 5 Cols) */}
           <div className="md:col-span-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <ChurchLogo className="w-10 h-10" />
-              <div>
-                <p className="text-xs text-amber-500 font-bold uppercase tracking-wider">
-                  예수교대한성결교회
-                </p>
-                <h3 className="text-2xl font-extrabold text-stone-100 font-serif">
-                  경안교회
-                </h3>
-              </div>
+            <div>
+              <h3 className="text-2xl font-extrabold text-stone-100 font-serif">
+                경안교회
+              </h3>
             </div>
 
 

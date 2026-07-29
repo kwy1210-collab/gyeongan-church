@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Menu, X, Phone, Church, Video, MapPin, Calendar, Compass, Heart, Users, Lock, KeyRound, ShieldAlert } from "lucide-react";
-import ChurchLogo from "@/components/icons/ChurchLogo";
 import MemberManagementModal from "@/components/MemberManagementModal";
 
 export default function Header() {
@@ -70,27 +69,15 @@ export default function Header() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group">
-          <div className={`transition-transform duration-300 group-hover:scale-105 ${isScrolled ? "drop-shadow-sm" : "drop-shadow-lg"}`}>
-            <ChurchLogo className="w-10 h-10" />
-          </div>
-          <div className="flex flex-col">
-            <span
-              className={`text-xs font-medium tracking-wider uppercase ${
-                isScrolled ? "text-amber-800" : "text-amber-300"
-              }`}
-            >
-              예수교대한성결교회
-            </span>
-            <span
-              className={`text-xl font-extrabold tracking-tight font-serif ${
-                isScrolled ? "text-stone-900" : "text-white"
-              }`}
-            >
-              경안교회
-            </span>
-          </div>
+        {/* Logo Text */}
+        <a href="#" className="flex items-center group">
+          <span
+            className={`text-2xl font-extrabold tracking-tight font-serif ${
+              isScrolled ? "text-stone-900" : "text-white"
+            }`}
+          >
+            경안교회
+          </span>
         </a>
 
         {/* Desktop Navigation */}
