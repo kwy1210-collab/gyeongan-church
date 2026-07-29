@@ -52,12 +52,12 @@ export default function HeroSection() {
         
         {/* Vision Text */}
         <div className="mb-10">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-serif leading-relaxed sm:leading-snug drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wide">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-serif leading-relaxed sm:leading-snug drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wide">
             복음을 통해 구원으로 부름받고,<br className="hidden sm:block" />
             훈련을 통해 성숙한 신자로 세워지고,<br className="hidden sm:block" />
             삶의 자리에서 그리스도의 향기를 나타냄으로 <br className="hidden sm:block" />
             하나님나라를 구현하는 공동체
-          </h2>
+          </h1>
         </div>
 
         {/* Action Buttons */}
