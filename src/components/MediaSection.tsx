@@ -7,6 +7,14 @@ import YoutubeIcon from "@/components/icons/YoutubeIcon";
 export default function MediaSection() {
   const initialSermons = [
     {
+      id: "sunday-0",
+      title: "2026-8-2 주일오전예배 (가치를 알면 선택이 달라진다)",
+      speaker: "고원영 담임목사",
+      date: "2026-8-2",
+      bible: "마태복음 13장 44~46절",
+      videoId: "Tte9mEojwcg",
+    },
+    {
       id: "sunday-1",
       title: "2026-7-26 주일오전예배 (겨자씨와 같은 하나님 나라)",
       speaker: "고원영 담임목사",
@@ -30,14 +38,6 @@ export default function MediaSection() {
       bible: "마태복음 19장 1-15절",
       videoId: "yxRySKafxOc",
     },
-    {
-      id: "sunday-4",
-      title: "2026-7-5 주일오전예배 (곤고한 날에, 형통한 날에)",
-      speaker: "고원영 담임목사",
-      date: "2026-7-5",
-      bible: "전도서 7장 11-14절",
-      videoId: "ZxR3TXQ28Bo",
-    },
   ];
 
   const [sermons, setSermons] = useState<any[]>(initialSermons);
@@ -53,17 +53,8 @@ export default function MediaSection() {
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
-            // Must contain '주일' and MUST NOT contain non-Sunday keywords
-            const sundayOnly = data.filter((s: any) => {
-              const t = s.title || '';
-              const isSundayTitle = t.includes('주일');
-              const hasWeekdayKey = t.includes('수요') || t.includes('새벽') || t.includes('말씀묵상') || t.includes('큐티') || t.includes('금요');
-              return isSundayTitle && !hasWeekdayKey;
-            });
-            if (sundayOnly.length >= 4) {
-              setSermons(sundayOnly.slice(0, 4));
-              setActiveSermon(sundayOnly[0]);
-            }
+            setSermons(data.slice(0, 4));
+            setActiveSermon(data[0]);
           }
         }
       } catch (error) {
