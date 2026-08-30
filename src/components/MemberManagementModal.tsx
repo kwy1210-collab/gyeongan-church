@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X,
   Search,
@@ -19,6 +19,9 @@ import {
   Filter,
   UserCheck,
   ChevronRight,
+  RefreshCw,
+  Download,
+  Upload,
 } from "lucide-react";
 
 export interface Member {
@@ -147,6 +150,11 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
   const [members, setMembers] = useState<Member[]>([]);
   const [visitations, setVisitations] = useState<VisitationRecord[]>([]);
 
+  // Syncing / Loading States
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("전체");
@@ -180,119 +188,149 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     notes: "",
   });
 
-  // Load from localStorage or set defaults
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedMembers = localStorage.getItem("gyeongan_church_members");
-      const savedVisitations = localStorage.getItem("gyeongan_church_visitations");
+  // Load from Server API and sync with local storage as backup
+  const loadData = useCallback(async (showSyncIndicator = false) => {
+    if (showSyncIndicator) setIsSyncing(true);
+    else setIsLoading(true);
 
-      if (savedMembers) {
-        try {
-          const parsed = JSON.parse(savedMembers);
-          setMembers(parsed);
-          if (parsed.length > 0) setSelectedMemberId(parsed[0].id);
-        } catch {
-          setMembers(INITIAL_MEMBERS);
-          setSelectedMemberId(INITIAL_MEMBERS[0].id);
-        }
+    try {
+      // 1. Fetch Members from Server API
+      const resMembers = await fetch("/api/members");
+      let fetchedMembers: Member[] = [];
+      if (resMembers.ok) {
+        fetchedMembers = await resMembers.json();
       } else {
-        setMembers(INITIAL_MEMBERS);
-        localStorage.setItem("gyeongan_church_members", JSON.stringify(INITIAL_MEMBERS));
-        setSelectedMemberId(INITIAL_MEMBERS[0].id);
+        throw new Error("Failed to fetch members from API");
       }
 
-      if (savedVisitations) {
-        try {
-          setVisitations(JSON.parse(savedVisitations));
-        } catch {
+      // 2. Fetch Visitations from Server API
+      const resVisitations = await fetch("/api/visitations");
+      let fetchedVisitations: VisitationRecord[] = [];
+      if (resVisitations.ok) {
+        fetchedVisitations = await resVisitations.json();
+      } else {
+        throw new Error("Failed to fetch visitations from API");
+      }
+
+      setMembers(fetchedMembers);
+      setVisitations(fetchedVisitations);
+
+      if (fetchedMembers.length > 0 && !selectedMemberId) {
+        setSelectedMemberId(fetchedMembers[0].id);
+      }
+
+      // Cache to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gyeongan_church_members", JSON.stringify(fetchedMembers));
+        localStorage.setItem("gyeongan_church_visitations", JSON.stringify(fetchedVisitations));
+      }
+
+      const now = new Date();
+      setLastSyncedAt(
+        `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`
+      );
+    } catch (error) {
+      console.warn("Failed to load from server API, using local backup:", error);
+
+      // Fallback to localStorage
+      if (typeof window !== "undefined") {
+        const savedMembers = localStorage.getItem("gyeongan_church_members");
+        const savedVisitations = localStorage.getItem("gyeongan_church_visitations");
+
+        if (savedMembers) {
+          try {
+            const parsed = JSON.parse(savedMembers);
+            setMembers(parsed);
+            if (parsed.length > 0 && !selectedMemberId) setSelectedMemberId(parsed[0].id);
+          } catch {
+            setMembers(INITIAL_MEMBERS);
+          }
+        } else {
+          setMembers(INITIAL_MEMBERS);
+        }
+
+        if (savedVisitations) {
+          try {
+            setVisitations(JSON.parse(savedVisitations));
+          } catch {
+            setVisitations(INITIAL_VISITATIONS);
+          }
+        } else {
           setVisitations(INITIAL_VISITATIONS);
         }
-      } else {
-        setVisitations(INITIAL_VISITATIONS);
-        localStorage.setItem("gyeongan_church_visitations", JSON.stringify(INITIAL_VISITATIONS));
       }
+    } finally {
+      setIsLoading(false);
+      setIsSyncing(false);
     }
-  }, []);
+  }, [selectedMemberId]);
 
-  // Save changes to localStorage
-  const saveMembersToStorage = (newMembers: Member[]) => {
-    setMembers(newMembers);
-    localStorage.setItem("gyeongan_church_members", JSON.stringify(newMembers));
-  };
-
-  const saveVisitationsToStorage = (newVisitations: VisitationRecord[]) => {
-    setVisitations(newVisitations);
-    localStorage.setItem("gyeongan_church_visitations", JSON.stringify(newVisitations));
-  };
-
-  if (!isOpen) return null;
-
-  // Districts list for filtering
-  const districts = ["전체", ...Array.from(new Set(members.map((m) => m.district || "기타")))];
-
-  // Filtered members
-  const filteredMembers = members.filter((m) => {
-    const matchesSearch =
-      m.name.includes(searchQuery) ||
-      m.phone.includes(searchQuery) ||
-      m.position.includes(searchQuery) ||
-      (m.notes && m.notes.includes(searchQuery));
-    const matchesDistrict = selectedDistrict === "전체" || m.district === selectedDistrict;
-    return matchesSearch && matchesDistrict;
-  });
-
-  const currentSelectedMember = members.find((m) => m.id === selectedMemberId) || filteredMembers[0] || null;
-  const currentMemberVisitations = visitations.filter((v) => v.memberId === currentSelectedMember?.id);
-
-  // Filtered Visitations
-  const filteredVisitations = visitations.filter(
-    (v) =>
-      v.memberName.includes(searchQuery) ||
-      v.type.includes(searchQuery) ||
-      v.visitor.includes(searchQuery) ||
-      v.scripture.includes(searchQuery) ||
-      v.prayerRequests.includes(searchQuery) ||
-      v.notes.includes(searchQuery)
-  );
+  useEffect(() => {
+    if (isOpen) {
+      loadData();
+    }
+  }, [isOpen, loadData]);
 
   // Save Member Handler
-  const handleSaveMember = (e: React.FormEvent) => {
+  const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memberFormData.name || !memberFormData.phone) {
       alert("이름과 연락처는 필수 항목입니다.");
       return;
     }
 
-    if (editingMember) {
-      const updated = members.map((m) =>
-        m.id === editingMember.id
-          ? {
-              ...m,
-              ...memberFormData,
-              name: memberFormData.name!,
-              phone: memberFormData.phone!,
-              position: memberFormData.position || "성도",
-              district: memberFormData.district || "1구역",
-            }
-          : m
-      );
-      saveMembersToStorage(updated);
-    } else {
-      const newMember: Member = {
-        id: `m-${Date.now()}`,
-        name: memberFormData.name!,
-        phone: memberFormData.phone!,
-        position: memberFormData.position || "성도",
-        district: memberFormData.district || "1구역",
-        birthdate: memberFormData.birthdate || "",
-        address: memberFormData.address || "",
-        familyNotes: memberFormData.familyNotes || "",
-        notes: memberFormData.notes || "",
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      const updated = [newMember, ...members];
-      saveMembersToStorage(updated);
-      setSelectedMemberId(newMember.id);
+    try {
+      if (editingMember) {
+        const payload: Member = {
+          ...editingMember,
+          ...memberFormData,
+          name: memberFormData.name!,
+          phone: memberFormData.phone!,
+          position: memberFormData.position || "성도",
+          district: memberFormData.district || "1구역",
+        };
+
+        const res = await fetch("/api/members", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setMembers(updated);
+          localStorage.setItem("gyeongan_church_members", JSON.stringify(updated));
+        }
+      } else {
+        const newMember: Member = {
+          id: `m-${Date.now()}`,
+          name: memberFormData.name!,
+          phone: memberFormData.phone!,
+          position: memberFormData.position || "성도",
+          district: memberFormData.district || "1구역",
+          birthdate: memberFormData.birthdate || "",
+          address: memberFormData.address || "",
+          familyNotes: memberFormData.familyNotes || "",
+          notes: memberFormData.notes || "",
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+
+        const res = await fetch("/api/members", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newMember),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setMembers(updated);
+          localStorage.setItem("gyeongan_church_members", JSON.stringify(updated));
+          setSelectedMemberId(newMember.id);
+        }
+      }
+    } catch (err) {
+      console.error("Save member failed:", err);
+      alert("서버 저장 중 오류가 발생했습니다. 데이터를 재동기화해주세요.");
     }
 
     setIsMemberFormOpen(false);
@@ -300,12 +338,28 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     resetMemberForm();
   };
 
-  const handleDeleteMember = (id: string) => {
-    if (confirm("정말로 이 성도 정보를 삭제하시겠습니까? 관련 심방 기록도 함께 정리될 수 있습니다.")) {
-      const updatedMembers = members.filter((m) => m.id !== id);
-      saveMembersToStorage(updatedMembers);
-      if (selectedMemberId === id) {
-        setSelectedMemberId(updatedMembers[0]?.id || null);
+  const handleDeleteMember = async (id: string) => {
+    if (confirm("정말로 이 성도 정보를 삭제하시겠습니까? 관련 심방 기록도 함께 삭제됩니다.")) {
+      try {
+        const resMem = await fetch(`/api/members?id=${id}`, { method: "DELETE" });
+        const resVis = await fetch(`/api/visitations?memberId=${id}`, { method: "DELETE" });
+
+        if (resMem.ok) {
+          const updatedMem = await resMem.json();
+          setMembers(updatedMem);
+          localStorage.setItem("gyeongan_church_members", JSON.stringify(updatedMem));
+          if (selectedMemberId === id) {
+            setSelectedMemberId(updatedMem[0]?.id || null);
+          }
+        }
+        if (resVis.ok) {
+          const updatedVis = await resVis.json();
+          setVisitations(updatedVis);
+          localStorage.setItem("gyeongan_church_visitations", JSON.stringify(updatedVis));
+        }
+      } catch (err) {
+        console.error("Delete member failed:", err);
+        alert("삭제 작업 중 오류가 발생했습니다.");
       }
     }
   };
@@ -336,7 +390,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
   };
 
   // Save Visitation Handler
-  const handleSaveVisitation = (e: React.FormEvent) => {
+  const handleSaveVisitation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!visitationFormData.memberId || !visitationFormData.notes) {
       alert("성도 선택과 심방 메모는 필수 항목입니다.");
@@ -346,38 +400,61 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     const targetMember = members.find((m) => m.id === visitationFormData.memberId);
     const memberName = targetMember ? targetMember.name : visitationFormData.memberName || "미지정";
 
-    if (editingVisitation) {
-      const updated = visitations.map((v) =>
-        v.id === editingVisitation.id
-          ? {
-              ...v,
-              ...visitationFormData,
-              memberName,
-              date: visitationFormData.date || new Date().toISOString().split("T")[0],
-              visitor: visitationFormData.visitor || "담임목사",
-              type: visitationFormData.type || "정기심방",
-              scripture: visitationFormData.scripture || "",
-              prayerRequests: visitationFormData.prayerRequests || "",
-              notes: visitationFormData.notes || "",
-            }
-          : v
-      );
-      saveVisitationsToStorage(updated);
-    } else {
-      const newRecord: VisitationRecord = {
-        id: `v-${Date.now()}`,
-        memberId: visitationFormData.memberId!,
-        memberName,
-        date: visitationFormData.date || new Date().toISOString().split("T")[0],
-        visitor: visitationFormData.visitor || "담임목사",
-        type: visitationFormData.type || "정기심방",
-        scripture: visitationFormData.scripture || "",
-        prayerRequests: visitationFormData.prayerRequests || "",
-        notes: visitationFormData.notes || "",
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      const updated = [newRecord, ...visitations];
-      saveVisitationsToStorage(updated);
+    try {
+      if (editingVisitation) {
+        const payload: VisitationRecord = {
+          ...editingVisitation,
+          ...visitationFormData,
+          memberId: visitationFormData.memberId!,
+          memberName,
+          date: visitationFormData.date || new Date().toISOString().split("T")[0],
+          visitor: visitationFormData.visitor || "담임목사",
+          type: visitationFormData.type || "정기심방",
+          scripture: visitationFormData.scripture || "",
+          prayerRequests: visitationFormData.prayerRequests || "",
+          notes: visitationFormData.notes || "",
+        };
+
+        const res = await fetch("/api/visitations", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setVisitations(updated);
+          localStorage.setItem("gyeongan_church_visitations", JSON.stringify(updated));
+        }
+      } else {
+        const newRecord: VisitationRecord = {
+          id: `v-${Date.now()}`,
+          memberId: visitationFormData.memberId!,
+          memberName,
+          date: visitationFormData.date || new Date().toISOString().split("T")[0],
+          visitor: visitationFormData.visitor || "담임목사",
+          type: visitationFormData.type || "정기심방",
+          scripture: visitationFormData.scripture || "",
+          prayerRequests: visitationFormData.prayerRequests || "",
+          notes: visitationFormData.notes || "",
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+
+        const res = await fetch("/api/visitations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newRecord),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setVisitations(updated);
+          localStorage.setItem("gyeongan_church_visitations", JSON.stringify(updated));
+        }
+      }
+    } catch (err) {
+      console.error("Save visitation failed:", err);
+      alert("심방 기록 저장 중 오류가 발생했습니다.");
     }
 
     setIsVisitationFormOpen(false);
@@ -385,10 +462,19 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     resetVisitationForm();
   };
 
-  const handleDeleteVisitation = (id: string) => {
+  const handleDeleteVisitation = async (id: string) => {
     if (confirm("이 심방 기록을 삭제하시겠습니까?")) {
-      const updated = visitations.filter((v) => v.id !== id);
-      saveVisitationsToStorage(updated);
+      try {
+        const res = await fetch(`/api/visitations?id=${id}`, { method: "DELETE" });
+        if (res.ok) {
+          const updated = await res.json();
+          setVisitations(updated);
+          localStorage.setItem("gyeongan_church_visitations", JSON.stringify(updated));
+        }
+      } catch (err) {
+        console.error("Delete visitation failed:", err);
+        alert("삭제 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -428,11 +514,100 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     setIsVisitationFormOpen(true);
   };
 
+  // Export Data Handler (Backup JSON)
+  const handleExportData = () => {
+    const backupObj = {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      members,
+      visitations,
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute(
+      "download",
+      `gyeongan_church_backup_${new Date().toISOString().split("T")[0]}.json`
+    );
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  // Import Data Handler (Restore JSON)
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (event.target.files && event.target.files[0]) {
+      fileReader.readAsText(event.target.files[0], "UTF-8");
+      fileReader.onload = async (e) => {
+        try {
+          const content = e.target?.result as string;
+          const parsed = JSON.parse(content);
+          if (parsed.members && parsed.visitations && Array.isArray(parsed.members)) {
+            if (confirm(`성도 ${parsed.members.length}명, 심방기록 ${parsed.visitations.length}건을 서버 데이터베이스로 복구하시겠습니까?`)) {
+              // Push to server
+              await fetch("/api/members", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(parsed.members),
+              });
+
+              await fetch("/api/visitations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(parsed.visitations),
+              });
+
+              await loadData(true);
+              alert("데이터가 성공적으로 서버에 복구되었습니다!");
+            }
+          } else {
+            alert("올바르지 않은 백업 파일 형식입니다.");
+          }
+        } catch (err) {
+          console.error("Import error:", err);
+          alert("파일을 읽는 중 오류가 발생했습니다.");
+        }
+      };
+    }
+  };
+
+  if (!isOpen) return null;
+
+  // Districts list for filtering
+  const districts = ["전체", ...Array.from(new Set(members.map((m) => m.district || "기타")))];
+
+  // Filtered members
+  const filteredMembers = members.filter((m) => {
+    const matchesSearch =
+      m.name.includes(searchQuery) ||
+      m.phone.includes(searchQuery) ||
+      m.position.includes(searchQuery) ||
+      (m.notes && m.notes.includes(searchQuery));
+    const matchesDistrict = selectedDistrict === "전체" || m.district === selectedDistrict;
+    return matchesSearch && matchesDistrict;
+  });
+
+  const currentSelectedMember = members.find((m) => m.id === selectedMemberId) || filteredMembers[0] || null;
+  const currentMemberVisitations = visitations.filter((v) => v.memberId === currentSelectedMember?.id);
+
+  // Filtered Visitations
+  const filteredVisitations = visitations.filter(
+    (v) =>
+      v.memberName.includes(searchQuery) ||
+      v.type.includes(searchQuery) ||
+      v.visitor.includes(searchQuery) ||
+      v.scripture.includes(searchQuery) ||
+      v.prayerRequests.includes(searchQuery) ||
+      v.notes.includes(searchQuery)
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-950/70 backdrop-blur-md animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden text-stone-800">
         {/* Header */}
-        <div className="bg-stone-900 text-white px-5 py-4 flex items-center justify-between shadow-md">
+        <div className="bg-stone-900 text-white px-5 py-3.5 flex items-center justify-between shadow-md">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-inner">
               <UserCheck className="w-5 h-5" />
@@ -440,24 +615,62 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold tracking-tight">성도 & 심방 관리 시스템</h2>
-                <span className="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-medium border border-amber-500/30">
-                  경안교회
+                <span className="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-medium border border-amber-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  전기기 실시간 공유
                 </span>
               </div>
-              <p className="text-xs text-stone-400">교인 명단 관리 및 목양 심방 기록 통합 솔루션</p>
+              <p className="text-xs text-stone-400 flex items-center gap-2">
+                <span>모든 컴퓨터 및 모바일 기기 실시간 데이터 동기화</span>
+                {lastSyncedAt && <span className="text-amber-400/80 font-mono">(최종동기화: {lastSyncedAt})</span>}
+              </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-colors"
-            title="닫기"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Realtime Refresh Button */}
+            <button
+              onClick={() => loadData(true)}
+              disabled={isSyncing}
+              className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/30 transition-colors disabled:opacity-50"
+              title="서버에서 최신 데이터 가져오기"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-amber-400" : ""}`} />
+              <span>{isSyncing ? "동기화 중..." : "새로고침"}</span>
+            </button>
+
+            {/* Export / Backup */}
+            <button
+              onClick={handleExportData}
+              className="hidden sm:flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-300 px-2.5 py-1.5 rounded-xl text-xs transition-colors"
+              title="데이터 백업 파일 저장"
+            >
+              <Download className="w-3.5 h-3.5 text-stone-400" />
+              <span>백업</span>
+            </button>
+
+            {/* Import / Restore */}
+            <label
+              className="hidden sm:flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-300 px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer"
+              title="백업 파일에서 데이터 복구"
+            >
+              <Upload className="w-3.5 h-3.5 text-stone-400" />
+              <span>복구</span>
+              <input type="file" accept=".json" onChange={handleImportData} className="hidden" />
+            </label>
+
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-colors ml-1"
+              title="닫기"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Toolbar & Tabs */}
-        <div className="bg-stone-50 border-b border-stone-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-stone-50 border-b border-stone-200 px-5 py-2.5 flex flex-wrap items-center justify-between gap-3">
           {/* Tabs */}
           <div className="flex items-center bg-stone-200/70 p-1 rounded-xl gap-1 text-sm font-medium">
             <button
@@ -512,7 +725,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
                 placeholder={activeTab === "visitations" ? "심방내용, 성도명 검색..." : "이름, 연락처, 직분 검색..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/40"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/40 text-stone-900"
               />
               {searchQuery && (
                 <button
@@ -547,7 +760,16 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden bg-white">
+        <div className="flex-1 overflow-hidden bg-white relative">
+          {isLoading && (
+            <div className="absolute inset-0 z-20 bg-white/70 backdrop-blur-xs flex items-center justify-center">
+              <div className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold">
+                <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+                <span>서버에서 최신 데이터를 불러오는 중...</span>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: MEMBERS */}
           {activeTab === "members" && (
             <div className="h-full flex flex-col md:flex-row">

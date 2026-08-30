@@ -1,5 +1,6 @@
-﻿node_modules/
+node_modules/
 .next/
 scratch_images/
 gyeongan-church/
 .env*
+tsconfig.tsbuildinfo
