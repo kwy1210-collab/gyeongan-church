@@ -1,92 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const dataFilePath = path.join(process.cwd(), "data", "visitations.json");
-
-declare global {
-  // eslint-disable-next-line no-var
-  var visitationsCache: any[] | undefined;
-}
-
-const INITIAL_VISITATIONS = [
-  {
-    id: "v-1",
-    memberId: "m-1",
-    memberName: "홍길동",
-    date: "2026-07-20",
-    visitor: "담임목사",
-    type: "정기심방",
-    scripture: "시편 23편 1-6절",
-    prayerRequests: "자녀 입시 준비 및 가정의 영육간 건강",
-    notes: "가족 모두 영적으로 단합되어 있으며, 직장 사업장에 하나님의 은혜가 함께하기를 기도 드림.",
-    createdAt: "2026-07-20",
-  },
-  {
-    id: "v-2",
-    memberId: "m-2",
-    memberName: "김성결",
-    date: "2026-07-25",
-    visitor: "담임목사, 여전도회장",
-    type: "환우심방",
-    scripture: "이사야 41장 10절",
-    prayerRequests: "관절 수술 후 쾌유 및 마음의 평안",
-    notes: "수술 결과 경과 양호함. 통증 감소 및 조속한 회복을 위해 함께 합심 기도함.",
-    createdAt: "2026-07-25",
-  },
-  {
-    id: "v-3",
-    memberId: "m-3",
-    memberName: "이은혜",
-    date: "2026-07-28",
-    visitor: "구역장",
-    type: "신규등록 심방",
-    scripture: "여호수아 1장 9절",
-    prayerRequests: "새로운 교회 적응과 가정의 믿음 바로 세우기",
-    notes: "새 교우로서 경안교회 공동체에 잘 안착하고 있으며, 새가족 교육 수료 독려함.",
-    createdAt: "2026-07-28",
-  },
-];
-
-async function readVisitationsFromFile() {
-  if (globalThis.visitationsCache && globalThis.visitationsCache.length > 0) {
-    return globalThis.visitationsCache;
-  }
-
-  try {
-    const fileData = await fs.readFile(dataFilePath, "utf-8");
-    const parsed = JSON.parse(fileData);
-    globalThis.visitationsCache = parsed;
-    return parsed;
-  } catch {
-    try {
-      const dataDir = path.join(process.cwd(), "data");
-      await fs.mkdir(dataDir, { recursive: true });
-      await fs.writeFile(dataFilePath, JSON.stringify(INITIAL_VISITATIONS, null, 2), "utf-8");
-    } catch (e) {
-      console.warn("FS write skipped:", e);
-    }
-    globalThis.visitationsCache = INITIAL_VISITATIONS;
-    return INITIAL_VISITATIONS;
-  }
-}
-
-async function saveVisitationsToFile(visitations: any[]) {
-  globalThis.visitationsCache = visitations;
-  try {
-    const dataDir = path.join(process.cwd(), "data");
-    await fs.mkdir(dataDir, { recursive: true });
-    await fs.writeFile(dataFilePath, JSON.stringify(visitations, null, 2), "utf-8");
-  } catch (e) {
-    console.warn("FS save skipped (read-only environment):", e);
-  }
-}
+import { fetchCloudData, saveCloudData } from "@/lib/cloudDb";
 
 export async function GET() {
   try {
-    const visitations = await readVisitationsFromFile();
-    return NextResponse.json(visitations);
+    const cloud = await fetchCloudData();
+    return NextResponse.json(cloud.visitations);
   } catch (error) {
     console.error("GET Visitations Error:", error);
     return NextResponse.json({ error: "Failed to load visitations" }, { status: 500 });
@@ -96,7 +15,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    let visitations = await readVisitationsFromFile();
+    const cloud = await fetchCloudData();
+    let visitations = cloud.visitations;
 
     if (Array.isArray(body)) {
       visitations = body;
@@ -104,7 +24,7 @@ export async function POST(request: Request) {
       visitations = [body, ...visitations];
     }
 
-    await saveVisitationsToFile(visitations);
+    await saveCloudData({ ...cloud, visitations });
     return NextResponse.json(visitations);
   } catch (error) {
     console.error("POST Visitations Error:", error);
@@ -115,14 +35,14 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const visitations = await readVisitationsFromFile();
+    const cloud = await fetchCloudData();
 
     if (!body.id) {
       return NextResponse.json({ error: "Visitation ID is required" }, { status: 400 });
     }
 
-    const updatedVisitations = visitations.map((v: any) => (v.id === body.id ? { ...v, ...body } : v));
-    await saveVisitationsToFile(updatedVisitations);
+    const updatedVisitations = cloud.visitations.map((v: any) => (v.id === body.id ? { ...v, ...body } : v));
+    await saveCloudData({ ...cloud, visitations: updatedVisitations });
     return NextResponse.json(updatedVisitations);
   } catch (error) {
     console.error("PUT Visitations Error:", error);
@@ -136,7 +56,8 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
     const memberId = searchParams.get("memberId");
 
-    let visitations = await readVisitationsFromFile();
+    const cloud = await fetchCloudData();
+    let visitations = cloud.visitations;
 
     if (id) {
       visitations = visitations.filter((v: any) => v.id !== id);
@@ -146,7 +67,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Visitation ID or Member ID is required" }, { status: 400 });
     }
 
-    await saveVisitationsToFile(visitations);
+    await saveCloudData({ ...cloud, visitations });
     return NextResponse.json(visitations);
   } catch (error) {
     console.error("DELETE Visitations Error:", error);

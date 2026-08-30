@@ -195,7 +195,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
 
     try {
       // 1. Fetch Members from Server API
-      const resMembers = await fetch("/api/members");
+      const resMembers = await fetch("/api/members", { cache: "no-store" });
       let fetchedMembers: Member[] = [];
       if (resMembers.ok) {
         fetchedMembers = await resMembers.json();
@@ -204,7 +204,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       }
 
       // 2. Fetch Visitations from Server API
-      const resVisitations = await fetch("/api/visitations");
+      const resVisitations = await fetch("/api/visitations", { cache: "no-store" });
       let fetchedVisitations: VisitationRecord[] = [];
       if (resVisitations.ok) {
         fetchedVisitations = await resVisitations.json();
