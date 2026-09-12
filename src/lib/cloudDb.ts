@@ -9,8 +9,11 @@ declare global {
   var masterVisitationsCache: any[] | undefined;
 }
 
-const membersFilePath = path.join(process.cwd(), "data", "members.json");
-const visitationsFilePath = path.join(process.cwd(), "data", "visitations.json");
+const isServerless = process.env.VERCEL || process.env.NODE_ENV === "production";
+const dataDir = isServerless ? "/tmp" : path.join(process.cwd(), "data");
+
+const membersFilePath = path.join(dataDir, "members.json");
+const visitationsFilePath = path.join(dataDir, "visitations.json");
 
 const INITIAL_MEMBERS = [
   {
@@ -46,7 +49,7 @@ const INITIAL_MEMBERS = [
 const INITIAL_VISITATIONS: any[] = [];
 
 export async function fetchCloudData(): Promise<{ members: any[]; visitations: any[] }> {
-  // 1. Memory Cache
+  // 1. Memory Cache Check
   if (globalThis.masterMembersCache && globalThis.masterMembersCache.length > 0) {
     return {
       members: globalThis.masterMembersCache,
@@ -54,16 +57,18 @@ export async function fetchCloudData(): Promise<{ members: any[]; visitations: a
     };
   }
 
-  // 2. Disk file read
+  // 2. Disk / Tmp File Read
   let members = INITIAL_MEMBERS;
   let visitations = INITIAL_VISITATIONS;
 
   try {
     const mData = await fs.readFile(membersFilePath, "utf-8");
-    members = JSON.parse(mData);
+    const parsed = JSON.parse(mData);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      members = parsed;
+    }
   } catch {
     try {
-      const dataDir = path.join(process.cwd(), "data");
       await fs.mkdir(dataDir, { recursive: true });
       await fs.writeFile(membersFilePath, JSON.stringify(INITIAL_MEMBERS, null, 2), "utf-8");
     } catch {}
@@ -71,10 +76,12 @@ export async function fetchCloudData(): Promise<{ members: any[]; visitations: a
 
   try {
     const vData = await fs.readFile(visitationsFilePath, "utf-8");
-    visitations = JSON.parse(vData);
+    const parsed = JSON.parse(vData);
+    if (Array.isArray(parsed)) {
+      visitations = parsed;
+    }
   } catch {
     try {
-      const dataDir = path.join(process.cwd(), "data");
       await fs.mkdir(dataDir, { recursive: true });
       await fs.writeFile(visitationsFilePath, JSON.stringify(INITIAL_VISITATIONS, null, 2), "utf-8");
     } catch {}
@@ -87,16 +94,23 @@ export async function fetchCloudData(): Promise<{ members: any[]; visitations: a
 }
 
 export async function saveCloudData(data: { members: any[]; visitations: any[] }) {
-  // 1. Update Memory Cache immediately
-  globalThis.masterMembersCache = data.members;
-  globalThis.masterVisitationsCache = data.visitations;
+  // 1. Update Memory Cache
+  if (Array.isArray(data.members)) {
+    globalThis.masterMembersCache = data.members;
+  }
+  if (Array.isArray(data.visitations)) {
+    globalThis.masterVisitationsCache = data.visitations;
+  }
 
-  // 2. Persist to disk files
+  // 2. Persist to disk (/tmp or /data)
   try {
-    const dataDir = path.join(process.cwd(), "data");
     await fs.mkdir(dataDir, { recursive: true });
-    await fs.writeFile(membersFilePath, JSON.stringify(data.members, null, 2), "utf-8");
-    await fs.writeFile(visitationsFilePath, JSON.stringify(data.visitations, null, 2), "utf-8");
+    if (Array.isArray(data.members)) {
+      await fs.writeFile(membersFilePath, JSON.stringify(data.members, null, 2), "utf-8");
+    }
+    if (Array.isArray(data.visitations)) {
+      await fs.writeFile(visitationsFilePath, JSON.stringify(data.visitations, null, 2), "utf-8");
+    }
   } catch (e) {
     console.warn("Disk save skipped:", e);
   }

@@ -187,41 +187,105 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     notes: "",
   });
 
-  // Load from Server API and sync with local storage as backup
+  // Load from Server API and smart merge with local storage backup
   const loadData = useCallback(async (showSyncIndicator = false) => {
     if (showSyncIndicator) setIsSyncing(true);
     else setIsLoading(true);
 
+    // 1. Read existing local data FIRST so UI shows full local list immediately
+    let localMembers: Member[] = [];
+    let localVisitations: VisitationRecord[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const sm = localStorage.getItem("gyeongan_church_members");
+        if (sm) {
+          const parsed = JSON.parse(sm);
+          if (Array.isArray(parsed) && parsed.length > 0) localMembers = parsed;
+        }
+        const sv = localStorage.getItem("gyeongan_church_visitations");
+        if (sv) {
+          const parsed = JSON.parse(sv);
+          if (Array.isArray(parsed) && parsed.length > 0) localVisitations = parsed;
+        }
+      } catch (e) {
+        console.warn("localStorage parse error:", e);
+      }
+    }
+
+    // Set local state immediately
+    if (localMembers.length > 0) {
+      setMembers(localMembers);
+      if (!selectedMemberId || !localMembers.some((m) => m.id === selectedMemberId)) {
+        setSelectedMemberId(localMembers[0].id);
+      }
+    }
+    if (localVisitations.length > 0) {
+      setVisitations(localVisitations);
+    }
+
+    // 2. Fetch server API and SMART MERGE (Union by ID - Never drop local members!)
     try {
-      // 1. Fetch Members from Server API
       const resMembers = await fetch("/api/members", { cache: "no-store" });
-      let fetchedMembers: Member[] = [];
-      if (resMembers.ok) {
-        fetchedMembers = await resMembers.json();
-      } else {
-        throw new Error("Failed to fetch members from API");
-      }
-
-      // 2. Fetch Visitations from Server API
       const resVisitations = await fetch("/api/visitations", { cache: "no-store" });
-      let fetchedVisitations: VisitationRecord[] = [];
+
+      let serverMembers: Member[] = [];
+      let serverVisitations: VisitationRecord[] = [];
+
+      if (resMembers.ok) {
+        const data = await resMembers.json();
+        if (Array.isArray(data)) serverMembers = data;
+      }
       if (resVisitations.ok) {
-        fetchedVisitations = await resVisitations.json();
-      } else {
-        throw new Error("Failed to fetch visitations from API");
+        const data = await resVisitations.json();
+        if (Array.isArray(data)) serverVisitations = data;
       }
 
-      setMembers(fetchedMembers);
-      setVisitations(fetchedVisitations);
+      // Smart Merge Members
+      const memberMap = new Map<string, Member>();
+      serverMembers.forEach((m) => memberMap.set(m.id, m));
+      localMembers.forEach((m) => memberMap.set(m.id, m));
 
-      if (fetchedMembers.length > 0 && !selectedMemberId) {
-        setSelectedMemberId(fetchedMembers[0].id);
+      if (memberMap.size === 0) {
+        INITIAL_MEMBERS.forEach((m) => memberMap.set(m.id, m));
       }
 
-      // Cache to localStorage
+      const mergedMembers = Array.from(memberMap.values());
+
+      // Smart Merge Visitations
+      const visitMap = new Map<string, VisitationRecord>();
+      serverVisitations.forEach((v) => visitMap.set(v.id, v));
+      localVisitations.forEach((v) => visitMap.set(v.id, v));
+      const mergedVisitations = Array.from(visitMap.values());
+
+      // Update State
+      setMembers(mergedMembers);
+      setVisitations(mergedVisitations);
+
+      if (mergedMembers.length > 0 && (!selectedMemberId || !mergedMembers.some((m) => m.id === selectedMemberId))) {
+        setSelectedMemberId(mergedMembers[0].id);
+      }
+
+      // Save Merged Super-set to localStorage
       if (typeof window !== "undefined") {
-        localStorage.setItem("gyeongan_church_members", JSON.stringify(fetchedMembers));
-        localStorage.setItem("gyeongan_church_visitations", JSON.stringify(fetchedVisitations));
+        localStorage.setItem("gyeongan_church_members", JSON.stringify(mergedMembers));
+        localStorage.setItem("gyeongan_church_visitations", JSON.stringify(mergedVisitations));
+      }
+
+      // Push merged list to server if local had items missing on server
+      if (mergedMembers.length > serverMembers.length) {
+        fetch("/api/members", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mergedMembers),
+        }).catch((e) => console.warn("Background server push error:", e));
+      }
+
+      if (mergedVisitations.length > serverVisitations.length) {
+        fetch("/api/visitations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mergedVisitations),
+        }).catch((e) => console.warn("Background visitations server push error:", e));
       }
 
       const now = new Date();
@@ -230,34 +294,6 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       );
     } catch (error) {
       console.warn("Failed to load from server API, using local backup:", error);
-
-      // Fallback to localStorage
-      if (typeof window !== "undefined") {
-        const savedMembers = localStorage.getItem("gyeongan_church_members");
-        const savedVisitations = localStorage.getItem("gyeongan_church_visitations");
-
-        if (savedMembers) {
-          try {
-            const parsed = JSON.parse(savedMembers);
-            setMembers(parsed);
-            if (parsed.length > 0 && !selectedMemberId) setSelectedMemberId(parsed[0].id);
-          } catch {
-            setMembers(INITIAL_MEMBERS);
-          }
-        } else {
-          setMembers(INITIAL_MEMBERS);
-        }
-
-        if (savedVisitations) {
-          try {
-            setVisitations(JSON.parse(savedVisitations));
-          } catch {
-            setVisitations(INITIAL_VISITATIONS);
-          }
-        } else {
-          setVisitations(INITIAL_VISITATIONS);
-        }
-      }
     } finally {
       setIsLoading(false);
       setIsSyncing(false);
@@ -297,19 +333,11 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
 
       // Sync with server API in background
       try {
-        const res = await fetch("/api/members", {
+        await fetch("/api/members", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedMember),
         });
-
-        if (res.ok) {
-          const serverMembers = await res.json();
-          setMembers(serverMembers);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("gyeongan_church_members", JSON.stringify(serverMembers));
-          }
-        }
       } catch (err) {
         console.warn("Background sync failed for edit member:", err);
       }
@@ -332,7 +360,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         createdAt: new Date().toISOString().split("T")[0],
       };
 
-      // Optimistic UI update - Add member IMMEDIATELY
+      // Optimistic UI update - Add member IMMEDIATELY to local list
       const updatedList = [newMember, ...members];
       setMembers(updatedList);
       if (typeof window !== "undefined") {
@@ -346,21 +374,13 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         setSelectedDistrict("전체");
       }
 
-      // Sync with server API in background
+      // Sync with server API in background (send full list or single item)
       try {
-        const res = await fetch("/api/members", {
+        await fetch("/api/members", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newMember),
+          body: JSON.stringify(updatedList),
         });
-
-        if (res.ok) {
-          const serverMembers = await res.json();
-          setMembers(serverMembers);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("gyeongan_church_members", JSON.stringify(serverMembers));
-          }
-        }
       } catch (err) {
         console.warn("Background sync failed for add member:", err);
       }
@@ -467,18 +487,11 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       }
 
       try {
-        const res = await fetch("/api/visitations", {
+        await fetch("/api/visitations", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedRecord),
         });
-        if (res.ok) {
-          const serverVis = await res.json();
-          setVisitations(serverVis);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("gyeongan_church_visitations", JSON.stringify(serverVis));
-          }
-        }
       } catch (err) {
         console.warn("Background visitation update failed:", err);
       }
@@ -496,7 +509,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         createdAt: new Date().toISOString().split("T")[0],
       };
 
-      // Optimistic update
+      // Optimistic update - Add visitation IMMEDIATELY to local list
       const updatedVisList = [newRecord, ...visitations];
       setVisitations(updatedVisList);
       if (typeof window !== "undefined") {
@@ -504,18 +517,11 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       }
 
       try {
-        const res = await fetch("/api/visitations", {
+        await fetch("/api/visitations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newRecord),
+          body: JSON.stringify(updatedVisList),
         });
-        if (res.ok) {
-          const serverVis = await res.json();
-          setVisitations(serverVis);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("gyeongan_church_visitations", JSON.stringify(serverVis));
-          }
-        }
       } catch (err) {
         console.warn("Background visitation add failed:", err);
       }

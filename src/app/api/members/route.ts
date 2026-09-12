@@ -19,9 +19,21 @@ export async function POST(request: Request) {
     let members = cloud.members;
 
     if (Array.isArray(body)) {
-      members = body;
-    } else if (body && typeof body === "object") {
-      members = [body, ...members];
+      // Merge full array by ID, preserving latest items
+      const map = new Map<string, any>();
+      members.forEach((m: any) => map.set(m.id, m));
+      body.forEach((m: any) => map.set(m.id, m));
+      members = Array.from(map.values());
+    } else if (body && typeof body === "object" && body.id) {
+      // Add or update single member
+      const map = new Map<string, any>();
+      map.set(body.id, body);
+      members.forEach((m: any) => {
+        if (!map.has(m.id)) {
+          map.set(m.id, m);
+        }
+      });
+      members = Array.from(map.values());
     }
 
     await saveCloudData({ ...cloud, members });
@@ -41,7 +53,13 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
     }
 
-    const updatedMembers = cloud.members.map((m: any) => (m.id === body.id ? { ...m, ...body } : m));
+    const map = new Map<string, any>();
+    cloud.members.forEach((m: any) => map.set(m.id, m));
+    
+    const existing = map.get(body.id) || {};
+    map.set(body.id, { ...existing, ...body });
+
+    const updatedMembers = Array.from(map.values());
     await saveCloudData({ ...cloud, members: updatedMembers });
     return NextResponse.json(updatedMembers);
   } catch (error) {

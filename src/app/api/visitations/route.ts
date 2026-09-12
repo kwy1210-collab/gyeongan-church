@@ -19,9 +19,19 @@ export async function POST(request: Request) {
     let visitations = cloud.visitations;
 
     if (Array.isArray(body)) {
-      visitations = body;
-    } else if (body && typeof body === "object") {
-      visitations = [body, ...visitations];
+      const map = new Map<string, any>();
+      visitations.forEach((v: any) => map.set(v.id, v));
+      body.forEach((v: any) => map.set(v.id, v));
+      visitations = Array.from(map.values());
+    } else if (body && typeof body === "object" && body.id) {
+      const map = new Map<string, any>();
+      map.set(body.id, body);
+      visitations.forEach((v: any) => {
+        if (!map.has(v.id)) {
+          map.set(v.id, v);
+        }
+      });
+      visitations = Array.from(map.values());
     }
 
     await saveCloudData({ ...cloud, visitations });
@@ -41,7 +51,13 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Visitation ID is required" }, { status: 400 });
     }
 
-    const updatedVisitations = cloud.visitations.map((v: any) => (v.id === body.id ? { ...v, ...body } : v));
+    const map = new Map<string, any>();
+    cloud.visitations.forEach((v: any) => map.set(v.id, v));
+
+    const existing = map.get(body.id) || {};
+    map.set(body.id, { ...existing, ...body });
+
+    const updatedVisitations = Array.from(map.values());
     await saveCloudData({ ...cloud, visitations: updatedVisitations });
     return NextResponse.json(updatedVisitations);
   } catch (error) {
