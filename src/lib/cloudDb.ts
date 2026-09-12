@@ -2,8 +2,17 @@
 import fs from "fs/promises";
 import path from "path";
 
-const CLOUD_OBJECT_ID = "ff808181a04ccf2d01a051e81cf11590";
-const CLOUD_URL = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
+declare global {
+  // eslint-disable-next-line no-var
+  var activeCloudObjectId: string | undefined;
+}
+
+const DEFAULT_CLOUD_OBJECT_ID = "ff808181a04ccf2d01a051e81cf11590";
+
+function getCloudUrl() {
+  const id = globalThis.activeCloudObjectId || DEFAULT_CLOUD_OBJECT_ID;
+  return `https://api.restful-api.dev/objects/${id}`;
+}
 
 const membersFilePath = path.join(process.cwd(), "data", "members.json");
 const visitationsFilePath = path.join(process.cwd(), "data", "visitations.json");
@@ -100,7 +109,7 @@ const INITIAL_VISITATIONS = [
 
 export async function fetchCloudData(): Promise<{ members: any[]; visitations: any[] }> {
   try {
-    const res = await fetch(CLOUD_URL, { cache: "no-store" });
+    const res = await fetch(getCloudUrl(), { cache: "no-store" });
     if (res.ok) {
       const json = await res.json();
       if (json.data && Array.isArray(json.data.members) && Array.isArray(json.data.visitations)) {
@@ -139,9 +148,9 @@ export async function saveCloudData(data: { members: any[]; visitations: any[] }
     console.warn("Local disk write skipped:", e);
   }
 
-  // 2. Cloud DB update
+  // 2. Cloud DB update with auto-creation fallback
   try {
-    await fetch(CLOUD_URL, {
+    const res = await fetch(getCloudUrl(), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,6 +159,24 @@ export async function saveCloudData(data: { members: any[]; visitations: any[] }
       }),
       cache: "no-store",
     });
+
+    if (!res.ok) {
+      // Re-create cloud object if current object expired or error
+      const createRes = await fetch("https://api.restful-api.dev/objects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "gyeongan_church_master_db",
+          data,
+        }),
+      });
+      if (createRes.ok) {
+        const created = await createRes.json();
+        if (created.id) {
+          globalThis.activeCloudObjectId = created.id;
+        }
+      }
+    }
   } catch (err) {
     console.error("Cloud DB write failed:", err);
   }
