@@ -21,6 +21,9 @@ import {
   RefreshCw,
   Download,
   Upload,
+  Smartphone,
+  Copy,
+  Check,
 } from "lucide-react";
 
 export interface Member {
@@ -52,92 +55,35 @@ export interface VisitationRecord {
 const INITIAL_MEMBERS: Member[] = [
   {
     id: "m-1",
-    name: "홍길동",
-    phone: "010-1234-5678",
-    position: "집사",
-    district: "1구역",
-    birthdate: "1980-05-15",
-    address: "경기도 광주시 경안동 123-45",
-    familyNotes: "배우자: 김영희 (집사), 자녀 2명 (민수, 지은)",
-    notes: "찬양대 봉사 중, 주일예배 참석 성실",
+    name: "박영주",
+    phone: "01023542783",
+    position: "성도",
+    district: "청년목장",
+    birthdate: "1992-12-20",
+    address: "부천시 장말로 137 사랑마을 청구아파트",
+    familyNotes: "박병하(동생)",
+    notes: "청년부 리더",
     createdAt: "2026-01-10",
   },
   {
     id: "m-2",
-    name: "김성결",
-    phone: "010-9876-5432",
-    position: "권사",
-    district: "2구역",
-    birthdate: "1965-11-20",
-    address: "경기도 광주시 송정동 88-1",
-    familyNotes: "자녀 직장 관계로 독거 중",
-    notes: "구역장 봉사 중, 새벽기도회 매일 참석",
+    name: "박영은",
+    phone: "01039528964",
+    position: "성도",
+    district: "청년목장",
     createdAt: "2026-01-15",
   },
   {
     id: "m-3",
-    name: "이은혜",
-    phone: "010-5555-7777",
+    name: "정대영",
+    phone: "01043905061",
     position: "성도",
-    district: "3구역",
-    birthdate: "1992-03-08",
-    address: "경기도 광주시 태전동 아파트 101동",
-    familyNotes: "신혼 가구, 남편 (박믿음 성도)",
-    notes: "올해 초 등록, 교사 봉사 희망",
+    district: "새가족",
     createdAt: "2026-03-01",
-  },
-  {
-    id: "m-4",
-    name: "박믿음",
-    phone: "010-3333-2222",
-    position: "장로",
-    district: "1구역",
-    birthdate: "1958-08-30",
-    address: "경기도 광주시 경안동 45-6",
-    familyNotes: "배우자: 최순희 (권사)",
-    notes: "재정부장 봉사 중",
-    createdAt: "2026-01-01",
   },
 ];
 
-const INITIAL_VISITATIONS: VisitationRecord[] = [
-  {
-    id: "v-1",
-    memberId: "m-1",
-    memberName: "홍길동",
-    date: "2026-07-20",
-    visitor: "담임목사",
-    type: "정기심방",
-    scripture: "시편 23편 1-6절",
-    prayerRequests: "자녀 입시 준비 및 가정의 영육간 건강",
-    notes: "가족 모두 영적으로 단합되어 있으며, 직장 사업장에 하나님의 은혜가 함께하기를 기도 드림.",
-    createdAt: "2026-07-20",
-  },
-  {
-    id: "v-2",
-    memberId: "m-2",
-    memberName: "김성결",
-    date: "2026-07-25",
-    visitor: "담임목사, 여전도회장",
-    type: "환우심방",
-    scripture: "이사야 41장 10절",
-    prayerRequests: "관절 수술 후 쾌유 및 마음의 평안",
-    notes: "수술 결과 경과 양호함. 통증 감소 및 조속한 회복을 위해 함께 합심 기도함.",
-    createdAt: "2026-07-25",
-  },
-  {
-    id: "v-3",
-    memberId: "m-3",
-    memberName: "이은혜",
-    date: "2026-07-28",
-    visitor: "구역장",
-    type: "신규등록 심방",
-    scripture: "여호수아 1장 9절",
-    prayerRequests: "새로운 교회 적응과 가정의 믿음 바로 세우기",
-    notes: "새 교우로서 경안교회 공동체에 잘 안착하고 있으며, 새가족 교육 수료 독려함.",
-    createdAt: "2026-07-28",
-  },
-];
+const INITIAL_VISITATIONS: VisitationRecord[] = [];
 
 interface Props {
   isOpen: boolean;
@@ -153,6 +99,11 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+
+  // Device Cross-Sync Modal State
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [syncCodeInput, setSyncCodeInput] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -223,7 +174,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       setVisitations(localVisitations);
     }
 
-    // 2. Fetch server API and SMART MERGE (Union by ID - Never drop local members!)
+    // 2. Fetch server API and SMART MERGE (Union by ID)
     try {
       const resMembers = await fetch("/api/members", { cache: "no-store" });
       const resVisitations = await fetch("/api/visitations", { cache: "no-store" });
@@ -261,31 +212,14 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
       setMembers(mergedMembers);
       setVisitations(mergedVisitations);
 
-      if (mergedMembers.length > 0 && (!selectedMemberId || !mergedMembers.some((m) => m.id === selectedMemberId))) {
+      if (mergedMembers.length > 0 && !selectedMemberId) {
         setSelectedMemberId(mergedMembers[0].id);
       }
 
-      // Save Merged Super-set to localStorage
+      // Cache Merged Data to LocalStorage & Server
       if (typeof window !== "undefined") {
         localStorage.setItem("gyeongan_church_members", JSON.stringify(mergedMembers));
         localStorage.setItem("gyeongan_church_visitations", JSON.stringify(mergedVisitations));
-      }
-
-      // Push merged list to server if local had items missing on server
-      if (mergedMembers.length > serverMembers.length) {
-        fetch("/api/members", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(mergedMembers),
-        }).catch((e) => console.warn("Background server push error:", e));
-      }
-
-      if (mergedVisitations.length > serverVisitations.length) {
-        fetch("/api/visitations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(mergedVisitations),
-        }).catch((e) => console.warn("Background visitations server push error:", e));
       }
 
       const now = new Date();
@@ -309,8 +243,8 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
   // Save Member Handler (Bulletproof Optimistic Updates)
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!memberFormData.name || !memberFormData.phone) {
-      alert("이름과 연락처는 필수 항목입니다.");
+    if (!memberFormData.name || !memberFormData.name.trim() || !memberFormData.phone || !memberFormData.phone.trim()) {
+      alert("성명과 연락처는 필수 입력 항목입니다.");
       return;
     }
 
@@ -333,11 +267,19 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
 
       // Sync with server API in background
       try {
-        await fetch("/api/members", {
+        const res = await fetch("/api/members", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedMember),
         });
+
+        if (res.ok) {
+          const serverMembers = await res.json();
+          setMembers(serverMembers);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("gyeongan_church_members", JSON.stringify(serverMembers));
+          }
+        }
       } catch (err) {
         console.warn("Background sync failed for edit member:", err);
       }
@@ -360,7 +302,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         createdAt: new Date().toISOString().split("T")[0],
       };
 
-      // Optimistic UI update - Add member IMMEDIATELY to local list
+      // Optimistic UI update - Add member IMMEDIATELY
       const updatedList = [newMember, ...members];
       setMembers(updatedList);
       if (typeof window !== "undefined") {
@@ -374,13 +316,21 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         setSelectedDistrict("전체");
       }
 
-      // Sync with server API in background (send full list or single item)
+      // Sync with server API in background
       try {
-        await fetch("/api/members", {
+        const res = await fetch("/api/members", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedList),
+          body: JSON.stringify(newMember),
         });
+
+        if (res.ok) {
+          const serverMembers = await res.json();
+          setMembers(serverMembers);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("gyeongan_church_members", JSON.stringify(serverMembers));
+          }
+        }
       } catch (err) {
         console.warn("Background sync failed for add member:", err);
       }
@@ -520,7 +470,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
         await fetch("/api/visitations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedVisList),
+          body: JSON.stringify(newRecord),
         });
       } catch (err) {
         console.warn("Background visitation add failed:", err);
@@ -603,6 +553,71 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  };
+
+  // 1-Click Sync Code Generator
+  const handleCopySyncCode = () => {
+    const syncData = {
+      members,
+      visitations,
+      syncedAt: new Date().toISOString(),
+    };
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(syncData))));
+    navigator.clipboard.writeText(code);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 3000);
+  };
+
+  // Apply Sync Code from input
+  const handleApplySyncCode = async () => {
+    if (!syncCodeInput.trim()) {
+      alert("동기화 코드를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const decoded = decodeURIComponent(escape(atob(syncCodeInput.trim())));
+      const parsed = JSON.parse(decoded);
+
+      if (parsed.members && Array.isArray(parsed.members)) {
+        const confirmMsg = `성도 ${parsed.members.length}명, 심방기록 ${(parsed.visitations || []).length}건 동기화 코드를 이 기기에 적용하시겠습니까?`;
+        if (confirm(confirmMsg)) {
+          // Merge with current state
+          const mArr: Member[] = parsed.members;
+          const vArr: VisitationRecord[] = parsed.visitations || [];
+
+          setMembers(mArr);
+          setVisitations(vArr);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("gyeongan_church_members", JSON.stringify(mArr));
+            localStorage.setItem("gyeongan_church_visitations", JSON.stringify(vArr));
+          }
+
+          // Push to server API
+          await fetch("/api/members", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(mArr),
+          });
+
+          await fetch("/api/visitations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(vArr),
+          });
+
+          alert("동기화가 성공적으로 적용되었습니다! 모든 기기에서 공유됩니다.");
+          setIsSyncModalOpen(false);
+          setSyncCodeInput("");
+        }
+      } else {
+        alert("올바르지 않은 동기화 코드 형식을 입력하셨습니다.");
+      }
+    } catch (e) {
+      console.error("Sync code apply error:", e);
+      alert("동기화 코드를 해독하는 중 오류가 발생했습니다. 코드를 다시 확인해주세요.");
+    }
   };
 
   // Import Data Handler (Restore JSON)
@@ -705,11 +720,21 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Device Sync Button */}
+            <button
+              onClick={() => setIsSyncModalOpen(true)}
+              className="flex items-center gap-1 bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-colors shadow-sm cursor-pointer"
+              title="다른 휴대폰/컴퓨터와 데이터 1초 만에 맞추기"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>기기 동기화</span>
+            </button>
+
             {/* Realtime Refresh Button */}
             <button
               onClick={() => loadData(true)}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/30 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/30 transition-colors disabled:opacity-50 cursor-pointer"
               title="서버에서 최신 데이터 가져오기"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-amber-400" : ""}`} />
@@ -719,7 +744,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
             {/* Export / Backup */}
             <button
               onClick={handleExportData}
-              className="hidden sm:flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-300 px-2.5 py-1.5 rounded-xl text-xs transition-colors"
+              className="hidden sm:flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-300 px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer"
               title="데이터 백업 파일 저장"
             >
               <Download className="w-3.5 h-3.5 text-stone-400" />
@@ -738,7 +763,7 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
 
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-colors ml-1"
+              className="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-colors ml-1 cursor-pointer"
               title="닫기"
             >
               <X className="w-5 h-5" />
@@ -1236,6 +1261,78 @@ export default function MemberManagementModal({ isOpen, onClose }: Props) {
           )}
         </div>
       </div>
+
+      {/* DEVICE CROSS-SYNC MODAL */}
+      {isSyncModalOpen && (
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-stone-200 animate-scale-in text-stone-900">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-amber-700" />
+                <h3 className="font-bold text-base">기기 간 실시간 동기화 & 공유</h3>
+              </div>
+              <button onClick={() => setIsSyncModalOpen(false)} className="text-stone-400 hover:text-stone-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-amber-950 space-y-1">
+                <p className="font-bold flex items-center gap-1 text-sm">
+                  <span>💡 동기화 방법 안내</span>
+                </p>
+                <p className="leading-relaxed">
+                  작업한 컴퓨터에서 <strong>[동기화 코드 복사]</strong>를 누른 뒤, 카카오톡이나 메시지로 다른 휴대폰/컴퓨터에 보내 아래 입력창에 붙여넣고 <strong>[동기화 적용]</strong>을 누르시면 1초 만에 그대로 맞춰집니다!
+                </p>
+              </div>
+
+              {/* Step 1: Copy Code */}
+              <div className="space-y-2 bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                <label className="font-bold text-stone-800 block text-xs">1단계: 현재 기기의 데이터 코드 복사</label>
+                <button
+                  onClick={handleCopySyncCode}
+                  className={`w-full py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${
+                    isCopied
+                      ? "bg-emerald-700 text-white"
+                      : "bg-amber-800 hover:bg-amber-900 text-white shadow-sm"
+                  }`}
+                >
+                  {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{isCopied ? "동기화 코드가 복사되었습니다!" : "📋 동기화 코드 복사하기"}</span>
+                </button>
+              </div>
+
+              {/* Step 2: Paste Code */}
+              <div className="space-y-2 bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                <label className="font-bold text-stone-800 block text-xs">2단계: 다른 기기에서 받은 코드 붙여넣기</label>
+                <textarea
+                  rows={3}
+                  value={syncCodeInput}
+                  onChange={(e) => setSyncCodeInput(e.target.value)}
+                  placeholder="복사한 동기화 코드를 여기에 붙여넣으세요..."
+                  className="w-full p-2 bg-white text-stone-900 font-mono text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-600/40 outline-none placeholder:text-stone-400"
+                />
+                <button
+                  onClick={handleApplySyncCode}
+                  className="w-full py-2.5 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-bold transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>✅ 이 기기에 동기화 적용하기</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-stone-200">
+              <button
+                onClick={() => setIsSyncModalOpen(false)}
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-semibold text-xs"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MEMBER EDIT / ADD MODAL */}
       {isMemberFormOpen && (

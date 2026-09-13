@@ -68,9 +68,23 @@ export async function fetchCloudData(): Promise<{ members: any[]; visitations: a
       members = parsed;
     }
   } catch {
+    // If local file read fails, try GitHub Raw fallback
+    try {
+      const ghRes = await fetch(
+        "https://raw.githubusercontent.com/kwy1210-collab/gyeongan-church/master/data/members.json",
+        { cache: "no-store" }
+      );
+      if (ghRes.ok) {
+        const ghParsed = await ghRes.json();
+        if (Array.isArray(ghParsed) && ghParsed.length > 0) {
+          members = ghParsed;
+        }
+      }
+    } catch {}
+
     try {
       await fs.mkdir(dataDir, { recursive: true });
-      await fs.writeFile(membersFilePath, JSON.stringify(INITIAL_MEMBERS, null, 2), "utf-8");
+      await fs.writeFile(membersFilePath, JSON.stringify(members, null, 2), "utf-8");
     } catch {}
   }
 
